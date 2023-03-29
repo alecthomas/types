@@ -28,18 +28,18 @@ func Some[T any](value T) Option[T] { return Option[T]{value: value, ok: true} }
 func None[T any]() Option[T] { return Option[T]{} }
 
 // Get returns the value and a boolean indicating if the Option contains a value.
-func (o *Option[T]) Get() (T, bool) { return o.value, o.ok }
+func (o Option[T]) Get() (T, bool) { return o.value, o.ok }
 
 // Default returns the Option value if it is present, otherwise it returns the
 // value passed.
-func (o *Option[T]) Default(value T) T {
+func (o Option[T]) Default(value T) T {
 	if o.ok {
 		return o.value
 	}
 	return value
 }
 
-func (o *Option[T]) MarshalJSON() ([]byte, error) {
+func (o Option[T]) MarshalJSON() ([]byte, error) {
 	if o.ok {
 		return json.Marshal(o.value)
 	}
@@ -58,14 +58,14 @@ func (o *Option[T]) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (o *Option[T]) String() string {
+func (o Option[T]) String() string {
 	if o.ok {
 		return fmt.Sprintf("%v", o.value)
 	}
 	return "None"
 }
 
-func (o *Option[T]) GoString() string {
+func (o Option[T]) GoString() string {
 	if o.ok {
 		return fmt.Sprintf("Some[%T](%#v)", o.value, o.value)
 	}

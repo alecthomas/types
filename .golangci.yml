@@ -52,6 +52,10 @@ linters:
     - maintidx
     - unused # Does not work with type parameters
     - dupword
+    - structcheck
+    - nosnakecase
+    - varcheck
+    - deadcode
 
 linters-settings:
   govet:

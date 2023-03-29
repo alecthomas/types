@@ -22,7 +22,7 @@ func Outcome[T any](value T, err error) Result[T] {
 	if err != nil {
 		return Err[T](err)
 	}
-	return Ok[T](value)
+	return Ok(value)
 }
 
 // Errorf returns a Result that contains a formatted error.
@@ -37,11 +37,11 @@ type Result[T any] struct {
 }
 
 // Get returns the value and a boolean indicating whether the value is present.
-func (r *Result[T]) Get() (T, bool) { return r.value, r.err == nil }
+func (r Result[T]) Get() (T, bool) { return r.value, r.err == nil }
 
 // Default returns the Result value if it is present, otherwise it returns the
 // value passed.
-func (r *Result[T]) Default(value T) T {
+func (r Result[T]) Default(value T) T {
 	if r.err == nil {
 		return r.value
 	}
@@ -49,16 +49,16 @@ func (r *Result[T]) Default(value T) T {
 }
 
 // Err returns the error, if any.
-func (r *Result[T]) Err() error { return r.err }
+func (r Result[T]) Err() error { return r.err }
 
-func (r *Result[T]) String() string {
+func (r Result[T]) String() string {
 	if r.err == nil {
 		return fmt.Sprintf("%v", r.value)
 	}
 	return fmt.Sprintf("error(%q)", r.err.Error())
 }
 
-func (r *Result[T]) GoString() string {
+func (r Result[T]) GoString() string {
 	if r.err == nil {
 		return fmt.Sprintf("Ok[%T](%#v)", r.value, r.value)
 	}
