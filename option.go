@@ -27,6 +27,9 @@ func Some[T any](value T) Option[T] { return Option[T]{value: value, ok: true} }
 // None returns an Option that contains nothing.
 func None[T any]() Option[T] { return Option[T]{} }
 
+// Ok returns true if the Option contains a value.
+func (o Option[T]) Ok() bool { return o.ok }
+
 // Get returns the value and a boolean indicating if the Option contains a value.
 func (o Option[T]) Get() (T, bool) { return o.value, o.ok }
 
