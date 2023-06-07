@@ -30,6 +30,15 @@ func None[T any]() Option[T] { return Option[T]{} }
 // Ok returns true if the Option contains a value.
 func (o Option[T]) Ok() bool { return o.ok }
 
+// Value returns the value. It panics if the Option contains nothing.
+func (o Option[T]) Value() T {
+	if !o.ok {
+		var t T
+		panic(fmt.Sprintf("Option[%T] contains nothing", t))
+	}
+	return o.value
+}
+
 // Get returns the value and a boolean indicating if the Option contains a value.
 func (o Option[T]) Get() (T, bool) { return o.value, o.ok }
 
