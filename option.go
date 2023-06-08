@@ -27,6 +27,14 @@ func Some[T any](value T) Option[T] { return Option[T]{value: value, ok: true} }
 // None returns an Option that contains nothing.
 func None[T any]() Option[T] { return Option[T]{} }
 
+// Ptr returns an Option that returns None[T]() if the pointer is nil, otherwise the dereferenced pointer.
+func Ptr[T any](ptr *T) Option[T] {
+	if ptr == nil {
+		return None[T]()
+	}
+	return Some(*ptr)
+}
+
 // Ok returns true if the Option contains a value.
 func (o Option[T]) Ok() bool { return o.ok }
 
