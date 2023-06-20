@@ -35,6 +35,14 @@ func Ptr[T any](ptr *T) Option[T] {
 	return Some(*ptr)
 }
 
+// Ptr returns a pointer to the value if the Option contains a value, otherwise nil.
+func (o Option[T]) Ptr() *T {
+	if o.ok {
+		return &o.value
+	}
+	return nil
+}
+
 // Ok returns true if the Option contains a value.
 func (o Option[T]) Ok() bool { return o.ok }
 
