@@ -1,10 +1,13 @@
-package types
+package types_test
 
 import (
+	"database/sql"
 	"encoding/json"
 	"testing"
 
 	"github.com/alecthomas/assert/v2"
+	. "github.com/alecthomas/types"
+	_ "modernc.org/sqlite" // Register SQLite driver.
 )
 
 func TestOptionGet(t *testing.T) {
@@ -53,4 +56,38 @@ func TestOptionGoString(t *testing.T) {
 
 	o = None[int]()
 	assert.Equal(t, "None[int]()", o.GoString())
+}
+
+func TestOptionSQL(t *testing.T) {
+	db, err := sql.Open("sqlite", ":memory:")
+	assert.NoError(t, err)
+	_, err = db.Exec(`CREATE TABLE test (id INTEGER PRIMARY KEY, value INTEGER);`)
+	assert.NoError(t, err)
+	_, err = db.Exec(`INSERT INTO test (id, value) VALUES (1, 1);`)
+	assert.NoError(t, err)
+	_, err = db.Exec(`INSERT INTO test (id, value) VALUES (2, NULL);`)
+	assert.NoError(t, err)
+
+	var option Option[int64]
+	rows, err := db.Query("SELECT value FROM test WHERE id = 1;")
+	assert.NoError(t, err)
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&option)
+		assert.NoError(t, err)
+	}
+	err = rows.Err()
+	assert.NoError(t, err)
+	assert.Equal(t, Some(int64(1)), option)
+
+	rows, err = db.Query("SELECT value FROM test WHERE id = 2;")
+	assert.NoError(t, err)
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&option)
+		assert.NoError(t, err)
+	}
+	err = rows.Err()
+	assert.NoError(t, err)
+	assert.Equal(t, None[int64](), option)
 }

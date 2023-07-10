@@ -1,6 +1,8 @@
 package types
 
 import (
+	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 )
@@ -17,6 +19,31 @@ type stdlib interface {
 type Option[T any] struct {
 	value T
 	ok    bool
+}
+
+var _ driver.Valuer = (*Option[int])(nil)
+var _ sql.Scanner = (*Option[int])(nil)
+
+func (o *Option[T]) Scan(src any) error {
+	if src == nil {
+		o.ok = false
+		var zero T
+		o.value = zero
+		return nil
+	}
+	o.ok = true
+	o.value, o.ok = src.(T)
+	if !o.ok {
+		return fmt.Errorf("cannot scan %T into Option[%T]", src, o.value)
+	}
+	return nil
+}
+
+func (o Option[T]) Value() (driver.Value, error) {
+	if o.ok {
+		return o.value, nil
+	}
+	return nil, nil
 }
 
 var _ stdlib = (*Option[int])(nil)
@@ -46,8 +73,8 @@ func (o Option[T]) Ptr() *T {
 // Ok returns true if the Option contains a value.
 func (o Option[T]) Ok() bool { return o.ok }
 
-// Value returns the value. It panics if the Option contains nothing.
-func (o Option[T]) Value() T {
+// MustGet returns the value. It panics if the Option contains nothing.
+func (o Option[T]) MustGet() T {
 	if !o.ok {
 		var t T
 		panic(fmt.Sprintf("Option[%T] contains nothing", t))
