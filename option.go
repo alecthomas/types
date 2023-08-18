@@ -3,6 +3,7 @@ package types
 import (
 	"database/sql"
 	"database/sql/driver"
+	"encoding"
 	"encoding/json"
 	"fmt"
 )
@@ -31,19 +32,58 @@ func (o *Option[T]) Scan(src any) error {
 		o.value = zero
 		return nil
 	}
-	o.ok = true
-	o.value, o.ok = src.(T)
-	if !o.ok {
-		return fmt.Errorf("cannot scan %T into Option[%T]", src, o.value)
+	if value, ok := src.(T); ok {
+		o.value = value
+		o.ok = true
+		return nil
+	}
+	var value T
+	switch scan := any(&value).(type) {
+	case sql.Scanner:
+		if err := scan.Scan(src); err != nil {
+			return fmt.Errorf("cannot scan %T into Option[%T]: %w", src, o.value, err)
+		}
+		o.value = value
+		o.ok = true
+
+	case encoding.TextUnmarshaler:
+		switch src := src.(type) {
+		case string:
+			if err := scan.UnmarshalText([]byte(src)); err != nil {
+				return fmt.Errorf("unmarshal from %T into Option[%T] failed: %w", src, o.value, err)
+			}
+			o.value = value
+			o.ok = true
+
+		case []byte:
+			if err := scan.UnmarshalText(src); err != nil {
+				return fmt.Errorf("cannot scan %T into Option[%T]: %w", src, o.value, err)
+			}
+			o.value = value
+			o.ok = true
+
+		default:
+			return fmt.Errorf("cannot unmarshal %T into Option[%T]", src, o.value)
+		}
+
+	default:
+		return fmt.Errorf("no decoding mechanism found for %T into Option[%T]", src, o.value)
 	}
 	return nil
 }
 
 func (o Option[T]) Value() (driver.Value, error) {
-	if o.ok {
-		return o.value, nil
+	if !o.ok {
+		return nil, nil
 	}
-	return nil, nil
+	switch value := any(o.value).(type) {
+	case driver.Valuer:
+		return value.Value()
+
+	case encoding.TextMarshaler:
+		return value.MarshalText()
+	}
+	return o.value, nil
 }
 
 var _ stdlib = (*Option[int])(nil)
