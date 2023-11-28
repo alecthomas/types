@@ -6,6 +6,7 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 // Stdlib interfaces types implement.
@@ -100,6 +101,14 @@ func Ptr[T any](ptr *T) Option[T] {
 		return None[T]()
 	}
 	return Some(*ptr)
+}
+
+// Zero returns an Option that returns None[T]() if the value is the zero value, otherwise the value.
+func Zero[T comparable](value T) Option[T] {
+	if reflect.ValueOf(value).IsZero() {
+		return None[T]()
+	}
+	return Some(value)
 }
 
 // Ptr returns a pointer to the value if the Option contains a value, otherwise nil.
