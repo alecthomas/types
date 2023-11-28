@@ -91,3 +91,17 @@ func TestOptionSQL(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, None[int64](), option)
 }
+
+func TestOptionZero(t *testing.T) {
+	assert.Equal(t, None[error](), Zero((error)(nil)))
+	assert.Equal(t, None[string](), Zero(""))
+}
+
+func TestOptionNil(t *testing.T) {
+	assert.Panics(t, func() {
+		var str string
+		assert.Equal(t, None[string](), Nil(str))
+	})
+
+	assert.Equal(t, None[error](), Nil((error)(nil)))
+}

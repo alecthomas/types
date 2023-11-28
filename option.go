@@ -95,7 +95,7 @@ func Some[T any](value T) Option[T] { return Option[T]{value: value, ok: true} }
 // None returns an Option that contains nothing.
 func None[T any]() Option[T] { return Option[T]{} }
 
-// Ptr returns an Option that returns None[T]() if the pointer is nil, otherwise the dereferenced pointer.
+// Ptr returns an Option that is invalid if the pointer is nil, otherwise the dereferenced pointer.
 func Ptr[T any](ptr *T) Option[T] {
 	if ptr == nil {
 		return None[T]()
@@ -103,9 +103,30 @@ func Ptr[T any](ptr *T) Option[T] {
 	return Some(*ptr)
 }
 
-// Zero returns an Option that returns None[T]() if the value is the zero value, otherwise the value.
-func Zero[T comparable](value T) Option[T] {
-	if reflect.ValueOf(value).IsZero() {
+// Nil returns an Option that is invalid if the value is nil, otherwise the value.
+//
+// If the type is not nillable (slice, map, chan, ptr, interface) this will panic.
+func Nil[T any](ptr T) Option[T] {
+	rv := reflect.ValueOf(ptr)
+	if !rv.IsValid() {
+		return None[T]()
+	}
+	switch rv.Type().Kind() {
+	case reflect.Slice, reflect.Map, reflect.Chan, reflect.Ptr, reflect.Interface:
+		if rv.IsNil() {
+			return None[T]()
+		}
+		return Some(ptr)
+
+	default:
+		panic("type is not nillable")
+	}
+}
+
+// Zero returns an Option that is invalid if the value is the zero value, otherwise the value.
+func Zero[T any](value T) Option[T] {
+	rv := reflect.ValueOf(value)
+	if !rv.IsValid() || rv.IsZero() {
 		return None[T]()
 	}
 	return Some(value)
