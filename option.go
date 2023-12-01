@@ -106,6 +106,8 @@ func Ptr[T any](ptr *T) Option[T] {
 // Nil returns an Option that is invalid if the value is nil, otherwise the value.
 //
 // If the type is not nillable (slice, map, chan, ptr, interface) this will panic.
+//
+// Unfortunately there's no way to do this without reflection.
 func Nil[T any](ptr T) Option[T] {
 	rv := reflect.ValueOf(ptr)
 	if !rv.IsValid() {
