@@ -8,6 +8,7 @@
 //
 //	import (
 //		"fmt"
+//		"runtime"
 //		"time"
 //
 //		"github.com/alecthomas/types/eventsource"
@@ -25,12 +26,15 @@
 //			}
 //		}()
 //
-//		// Publish a value.
-//		e.Store(1)
+//		// Publish a set a value.
+//		e.Publish(1)
 //
-//		// Publish a value and wait for it to be received.
+//		// Set and publish a value.
 //		e.Store(2)
-//		time.Sleep(time.Millisecond)
+//
+//		runtime.GoSched()
+//
+//		fmt.Println(e.Load())
 //	}
 package eventsource
 
