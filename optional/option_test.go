@@ -1,4 +1,4 @@
-package types_test
+package optional_test
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/alecthomas/assert/v2"
-	. "github.com/alecthomas/types"
+	. "github.com/alecthomas/types/optional"
 	_ "modernc.org/sqlite" // Register SQLite driver.
 )
 

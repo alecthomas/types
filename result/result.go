@@ -1,10 +1,19 @@
-package types
+// Package result provides a Result type that can contain a value or an error.
+package result
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 )
+
+// Stdlib interfaces types implement.
+type stdlib interface {
+	fmt.Stringer
+	fmt.GoStringer
+	json.Marshaler
+	json.Unmarshaler
+}
 
 var _ stdlib = (*Result[int])(nil)
 

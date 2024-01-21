@@ -1,4 +1,5 @@
-package types
+// Package optional provides an Option type that can contain a value or nothing.
+package optional
 
 import (
 	"database/sql"

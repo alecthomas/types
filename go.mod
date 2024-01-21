@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/alecthomas/atomic v0.1.0-alpha2
 	github.com/alecthomas/repr v0.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect

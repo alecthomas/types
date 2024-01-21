@@ -1,4 +1,4 @@
-package types
+package result
 
 // Go runs a function in a goroutine and returns a channel that will receive the
 // Result.
