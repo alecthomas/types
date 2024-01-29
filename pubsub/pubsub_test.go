@@ -1,11 +1,36 @@
 package pubsub
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/alecthomas/assert/v2"
 )
+
+func Example() {
+	// Create a new topic.
+	t := New[int]()
+
+	// Subscribe to changes.
+	changes := t.Subscribe(nil)
+	go func() {
+		for change := range changes {
+			fmt.Println("change:", change)
+		}
+	}()
+
+	// Publish a value.
+	t.Publish(1)
+
+	// Publish a value and wait for it to be received.
+	t.Publish(2)
+
+	time.Sleep(time.Millisecond * 100)
+	// Output:
+	// change: 1
+	// change: 2
+}
 
 func TestPubsub(t *testing.T) {
 	pubsub := New[string]()

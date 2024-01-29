@@ -1,35 +1,4 @@
 // Package pubsub provides a simple publish/subscribe mechanism.
-//
-// Example:
-//
-//	package main
-//
-//	import (
-//		"fmt"
-//		"time"
-//
-//		"github.com/alecthomas/types/pubsub"
-//	)
-//
-//	func main() {
-//		// Create a new topic.
-//		t := pubsub.New[int]()
-//
-//		// Subscribe to changes.
-//		changes := t.Subscribe(nil)
-//		go func() {
-//			for change := range changes {
-//				fmt.Println("change:", change)
-//			}
-//		}()
-//
-//		// Publish a value.
-//		t.Publish(1)
-//
-//		// Publish a value and wait for it to be received.
-//		t.Publish(2)
-//		time.Sleep(time.Millisecond)
-//	}
 package pubsub
 
 import "fmt"
@@ -71,7 +40,12 @@ func (s *Topic[T]) Publish(t T) {
 // Subscribe a channel to the topic.
 //
 // The channel will be closed when the topic is closed.
+//
+// If "c" is nil a new channel of size 16 will be created.
 func (s *Topic[T]) Subscribe(c chan T) chan T {
+	if c == nil {
+		c = make(chan T, 16)
+	}
 	s.control <- subscribe[T](c)
 	return c
 }

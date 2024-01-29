@@ -1,41 +1,6 @@
 // Package eventsource provides a pubsub.Topic that also stores the last published value in an atomic.Value.
 //
 // Updating the value will result in a publish event.
-//
-// Example:
-//
-//	package main
-//
-//	import (
-//		"fmt"
-//		"runtime"
-//		"time"
-//
-//		"github.com/alecthomas/types/eventsource"
-//	)
-//
-//	func main() {
-//		// Create a new event source.
-//		e := eventsource.New[int]()
-//
-//		// Subscribe to changes.
-//		changes := e.Subscribe(nil)
-//		go func() {
-//			for change := range changes {
-//				fmt.Println("change:", change)
-//			}
-//		}()
-//
-//		// Publish a set a value.
-//		e.Publish(1)
-//
-//		// Set and publish a value.
-//		e.Store(2)
-//
-//		runtime.GoSched()
-//
-//		fmt.Println(e.Load())
-//	}
 package eventsource
 
 import (
