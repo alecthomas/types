@@ -21,6 +21,7 @@ func (stop) control() {}
 type Topic[T any] struct {
 	publish chan T
 	control chan control[T]
+	close   chan struct{}
 }
 
 // New creates a new topic that can be used to publish and subscribe to messages.
@@ -28,9 +29,15 @@ func New[T any]() *Topic[T] {
 	s := &Topic[T]{
 		publish: make(chan T, 64),
 		control: make(chan control[T]),
+		close:   make(chan struct{}),
 	}
 	go s.run()
 	return s
+}
+
+// Wait that returns a channel that will be closed when the Topic is closed.
+func (s *Topic[T]) Wait() chan struct{} {
+	return s.close
 }
 
 func (s *Topic[T]) Publish(t T) {
@@ -58,6 +65,7 @@ func (s *Topic[T]) Unsubscribe(c chan T) {
 // Close the topic, blocking until all subscribers have been closed.
 func (s *Topic[T]) Close() error {
 	s.control <- stop{}
+	<-s.close
 	return nil
 }
 
@@ -80,6 +88,7 @@ func (s *Topic[T]) run() {
 				}
 				close(s.control)
 				close(s.publish)
+				close(s.close)
 				return
 
 			default:
