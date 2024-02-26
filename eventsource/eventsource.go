@@ -21,11 +21,12 @@ func New[T any]() *EventSource[T] {
 	var t T
 	e := &EventSource[T]{Topic: pubsub.New[T]()}
 	e.value.Store(t)
-	changes := make(chan T, 64)
-	e.Subscribe(changes)
+	changes := make(chan pubsub.Message[T], 64)
+	e.SubscribeSync(changes)
 	go func() {
-		for value := range changes {
-			e.value.Store(value)
+		for msg := range changes {
+			e.value.Store(msg.Msg)
+			msg.Ack()
 		}
 	}()
 	return e
@@ -33,7 +34,7 @@ func New[T any]() *EventSource[T] {
 
 func (e *EventSource[T]) Store(value T) {
 	e.value.Store(value)
-	e.Publish(value)
+	e.PublishSync(value)
 }
 
 func (e *EventSource[T]) Load() T {
@@ -42,13 +43,13 @@ func (e *EventSource[T]) Load() T {
 
 func (e *EventSource[T]) Swap(value T) T {
 	rv := e.value.Swap(value)
-	e.Publish(value)
+	e.PublishSync(value)
 	return rv.(T)
 }
 
 func (e *EventSource[T]) CompareAndSwap(old, new T) bool { //nolint:predeclared
 	if e.value.CompareAndSwap(old, new) {
-		e.Publish(new)
+		e.PublishSync(new)
 		return true
 	}
 	return false

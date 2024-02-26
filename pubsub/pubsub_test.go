@@ -1,4 +1,4 @@
-package pubsub
+package pubsub_test
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/assert/v2"
+	. "github.com/alecthomas/types/pubsub" //nolint
 )
 
 func Example() {
@@ -48,4 +49,36 @@ func TestPubsub(t *testing.T) {
 	assert.Panics(t, func() { pubsub.Subscribe(ch) })
 	assert.Panics(t, func() { pubsub.Unsubscribe(ch) })
 	assert.Panics(t, func() { pubsub.Publish("hello") })
+}
+
+func TestSyncPubSub(t *testing.T) {
+	pubsub := New[string]()
+	defer pubsub.Close() //nolint
+	order := make(chan string, 64)
+	finished := make(chan struct{})
+	ch := pubsub.SubscribeSync(nil)
+	go func() {
+		pubsub.PublishSync("hello")
+		order <- "published"
+		close(finished)
+	}()
+	select {
+	case msg := <-ch:
+		assert.Equal(t, "hello", msg.Msg)
+		order <- "received"
+		msg.Ack()
+
+	case <-time.After(time.Millisecond * 500):
+		t.Fatal("timeout")
+	}
+	<-finished
+	close(order)
+
+	// Ensure that the message was received before it was published and thus
+	// acked.
+	actual := []string{}
+	for o := range order {
+		actual = append(actual, o)
+	}
+	assert.Equal(t, []string{"received", "published"}, actual)
 }
