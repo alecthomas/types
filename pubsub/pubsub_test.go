@@ -46,6 +46,13 @@ func TestPubsub(t *testing.T) {
 		t.Fail()
 	}
 	_ = pubsub.Close()
+	select {
+	case _, ok := <-ch:
+		assert.True(t, !ok, "channel should be closed")
+
+	case <-time.After(time.Millisecond * 100):
+		t.Fatal("channel should have been closed")
+	}
 	assert.Panics(t, func() { pubsub.Subscribe(ch) })
 	assert.Panics(t, func() { pubsub.Unsubscribe(ch) })
 	assert.Panics(t, func() { pubsub.Publish("hello") })

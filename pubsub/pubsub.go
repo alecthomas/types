@@ -98,6 +98,7 @@ func (s *Topic[T]) Subscribe(c chan T) chan T {
 			c <- msg.Msg
 			msg.Ack()
 		}
+		close(c)
 	}()
 	s.rawChannelMap.Store(c, forward)
 	s.control <- subscribe[T](forward)
