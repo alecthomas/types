@@ -2,6 +2,7 @@ package eventsource
 
 import (
 	"fmt"
+	"log"
 )
 
 func Example() {
@@ -18,10 +19,16 @@ func Example() {
 	}()
 
 	// Publish a set a value.
-	e.PublishSync(1)
+	err := e.PublishSync(1)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Set and publish a value.
-	e.Store(2)
+	err = e.Store(2)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println(e.Load())
 

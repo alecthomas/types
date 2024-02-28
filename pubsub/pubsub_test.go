@@ -1,6 +1,7 @@
 package pubsub_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -65,8 +66,14 @@ func TestSyncPubSub(t *testing.T) {
 	finished := make(chan struct{})
 	ch := pubsub.SubscribeSync(nil)
 	go func() {
-		pubsub.PublishSync("hello")
+		err := pubsub.PublishSync("hello")
 		order <- "published"
+		assert.NoError(t, err)
+
+		err = pubsub.PublishSync("world")
+		order <- "published"
+		assert.EqualError(t, err, "nack")
+
 		close(finished)
 	}()
 	select {
@@ -74,6 +81,17 @@ func TestSyncPubSub(t *testing.T) {
 		assert.Equal(t, "hello", msg.Msg)
 		order <- "received"
 		msg.Ack()
+
+		// Test nack
+		select {
+		case msg := <-ch:
+			assert.Equal(t, "world", msg.Msg)
+			order <- "received"
+			msg.Nack(errors.New("nack"))
+
+		case <-time.After(time.Millisecond * 500):
+			t.Fatal("timeout")
+		}
 
 	case <-time.After(time.Millisecond * 500):
 		t.Fatal("timeout")
@@ -87,5 +105,5 @@ func TestSyncPubSub(t *testing.T) {
 	for o := range order {
 		actual = append(actual, o)
 	}
-	assert.Equal(t, []string{"received", "published"}, actual)
+	assert.Equal(t, []string{"received", "published", "received", "published"}, actual)
 }

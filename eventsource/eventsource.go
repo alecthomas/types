@@ -32,9 +32,12 @@ func New[T any]() *EventSource[T] {
 	return e
 }
 
-func (e *EventSource[T]) Store(value T) {
+// Store will store a new value and synchronously publish it to all subscribers.
+//
+// It will return any errors from the publish.
+func (e *EventSource[T]) Store(value T) error {
 	e.value.Store(value)
-	e.PublishSync(value)
+	return e.PublishSync(value)
 }
 
 func (e *EventSource[T]) Load() T {
@@ -43,13 +46,13 @@ func (e *EventSource[T]) Load() T {
 
 func (e *EventSource[T]) Swap(value T) T {
 	rv := e.value.Swap(value)
-	e.PublishSync(value)
+	_ = e.PublishSync(value)
 	return rv.(T)
 }
 
 func (e *EventSource[T]) CompareAndSwap(old, new T) bool { //nolint:predeclared
 	if e.value.CompareAndSwap(old, new) {
-		e.PublishSync(new)
+		_ = e.PublishSync(new)
 		return true
 	}
 	return false

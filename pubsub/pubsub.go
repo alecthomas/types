@@ -4,6 +4,7 @@
 package pubsub
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -17,10 +18,17 @@ const AckTimeout = time.Second * 30
 // Message is a message that must be acknowledge by the receiver.
 type Message[T any] struct {
 	Msg T
-	ack chan struct{}
+	ack chan error
 }
 
 func (a *Message[T]) Ack() { close(a.ack) }
+func (a *Message[T]) Nack(err error) {
+	if err == nil {
+		err = fmt.Errorf("nack")
+	}
+	a.ack <- err
+	close(a.ack)
+}
 
 // Control messages for the topic.
 type control[T any] interface{ control() }
@@ -67,19 +75,21 @@ func (s *Topic[T]) Wait() chan struct{} {
 
 // Publish a message to the topic.
 func (s *Topic[T]) Publish(t T) {
-	s.publish <- Message[T]{Msg: t, ack: make(chan struct{})}
+	s.publish <- Message[T]{Msg: t, ack: make(chan error, 1)}
 }
 
 // PublishSync publishes a message to the topic and blocks until all subscriber
 // channels have acked the message.
-func (s *Topic[T]) PublishSync(t T) {
-	ack := make(chan struct{})
+func (s *Topic[T]) PublishSync(t T) error {
+	ack := make(chan error, 1)
 	s.publish <- Message[T]{Msg: t, ack: ack}
 	timer := time.NewTimer(AckTimeout)
 	defer timer.Stop()
 	select {
-	case <-ack:
+	case err := <-ack:
+		return err
 	case <-timer.C:
+		return nil
 	}
 }
 
@@ -175,17 +185,20 @@ func (s *Topic[T]) run() {
 			}
 
 		case msg := <-s.publish:
+			errs := []error{}
 			for ch := range subscriptions {
-				smsg := Message[T]{Msg: msg.Msg, ack: make(chan struct{})}
+				smsg := Message[T]{Msg: msg.Msg, ack: make(chan error, 1)}
 				ch <- smsg
 				timer := time.NewTimer(AckTimeout)
 				select {
-				case <-smsg.ack:
+				case err := <-smsg.ack:
+					errs = append(errs, err)
 				case <-timer.C:
 					panic("ack timeout")
 				}
 				timer.Stop()
 			}
+			msg.ack <- errors.Join(errs...)
 			close(msg.ack)
 		}
 	}
