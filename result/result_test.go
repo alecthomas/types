@@ -13,7 +13,7 @@ func TestResultGet(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 1, v)
 
-	r = Errorf[int]("foo")
+	r = Errf[int]("foo")
 	_, ok = r.Get()
 	assert.False(t, ok)
 }
@@ -24,7 +24,7 @@ func TestResultMarshalJSON(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, `{"value":1}`, string(b))
 
-	r = Errorf[int]("foo")
+	r = Errf[int]("foo")
 	b, err = json.Marshal(r)
 	assert.NoError(t, err)
 	assert.Equal(t, `{"error":"foo"}`, string(b))
@@ -36,7 +36,7 @@ func TestResultUnmarshalJSON(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, Ok(1), r)
 
-	r = Errorf[int]("error")
+	r = Errf[int]("error")
 	err = json.Unmarshal([]byte(`{"error":"error"}`), &r)
 	assert.NoError(t, err)
 }

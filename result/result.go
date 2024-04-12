@@ -23,10 +23,23 @@ func Ok[T any](value T) Result[T] { return Result[T]{value: value} }
 // Err returns a Result that contains an error.
 func Err[T any](err error) Result[T] { return Result[T]{err: err} }
 
+// From returns a Result that contains a value or an error.
+//
+// It can be used to convert a function that returns a value and an error into a
+// Result.
+func From[T any](value T, err error) Result[T] {
+	if err != nil {
+		return Err[T](err)
+	}
+	return Ok(value)
+}
+
 // Outcome returns a Result that contains a value or an error.
 //
 // It can be used to convert a function that returns a value and an error into a
 // Result.
+//
+// Deprecated: Use From instead.
 func Outcome[T any](value T, err error) Result[T] {
 	if err != nil {
 		return Err[T](err)
@@ -34,7 +47,14 @@ func Outcome[T any](value T, err error) Result[T] {
 	return Ok(value)
 }
 
+// Errf returns a Result that contains a formatted error.
+func Errf[T any](format string, args ...interface{}) Result[T] {
+	return Err[T](fmt.Errorf(format, args...))
+}
+
 // Errorf returns a Result that contains a formatted error.
+//
+// Deprecated: Use Errf instead.
 func Errorf[T any](format string, args ...interface{}) Result[T] {
 	return Err[T](fmt.Errorf(format, args...))
 }
@@ -47,6 +67,9 @@ type Result[T any] struct {
 
 // Get returns the value and a boolean indicating whether the value is present.
 func (r Result[T]) Get() (T, bool) { return r.value, r.err == nil }
+
+// Result returns the underlying value and error.
+func (r Result[T]) Result() (T, error) { return r.value, r.err }
 
 // Default returns the Result value if it is present, otherwise it returns the
 // value passed.

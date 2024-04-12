@@ -10,6 +10,16 @@ import (
 	_ "modernc.org/sqlite" // Register SQLite driver.
 )
 
+func TestOptionFrom(t *testing.T) {
+	yes := func() (string, bool) { return "yes", true }
+	no := func() (string, bool) { return "", false }
+
+	o := From(yes())
+	assert.Equal(t, Some("yes"), o)
+	o = From(no())
+	assert.Equal(t, None[string](), o)
+}
+
 func TestOptionGet(t *testing.T) {
 	o := Some(1)
 	v, ok := o.Get()

@@ -10,13 +10,15 @@ import (
 	"reflect"
 )
 
-// Stdlib interfaces types implement.
-type stdlib interface {
+// Stdlib interfaces Option implements.
+var _ interface {
 	fmt.Stringer
 	fmt.GoStringer
 	json.Marshaler
 	json.Unmarshaler
-}
+	driver.Valuer
+	sql.Scanner
+} = (*Option[int])(nil)
 
 // An Option type is a type that can contain a value or nothing.
 type Option[T any] struct {
@@ -24,8 +26,58 @@ type Option[T any] struct {
 	ok    bool
 }
 
-var _ driver.Valuer = (*Option[int])(nil)
-var _ sql.Scanner = (*Option[int])(nil)
+// From returns an Option that contains a value if ok is true, otherwise None.
+func From[T any](value T, ok bool) Option[T] {
+	if ok {
+		return Some(value)
+	}
+	return None[T]()
+}
+
+// Some returns an Option that contains a value.
+func Some[T any](value T) Option[T] { return Option[T]{value: value, ok: true} }
+
+// None returns an Option that contains nothing.
+func None[T any]() Option[T] { return Option[T]{} }
+
+// Ptr returns an Option that is invalid if the pointer is nil, otherwise the dereferenced pointer.
+func Ptr[T any](ptr *T) Option[T] {
+	if ptr == nil {
+		return None[T]()
+	}
+	return Some(*ptr)
+}
+
+// Nil returns an Option that is invalid if the value is nil, otherwise the value.
+//
+// If the type is not nillable (slice, map, chan, ptr, interface) this will panic.
+//
+// Unfortunately there's no way to do this without reflection.
+func Nil[T any](ptr T) Option[T] {
+	rv := reflect.ValueOf(ptr)
+	if !rv.IsValid() {
+		return None[T]()
+	}
+	switch rv.Type().Kind() {
+	case reflect.Slice, reflect.Map, reflect.Chan, reflect.Ptr, reflect.Interface:
+		if rv.IsNil() {
+			return None[T]()
+		}
+		return Some(ptr)
+
+	default:
+		panic("type is not nillable")
+	}
+}
+
+// Zero returns an Option that is invalid if the value is the zero value, otherwise the value.
+func Zero[T any](value T) Option[T] {
+	rv := reflect.ValueOf(value)
+	if !rv.IsValid() || rv.IsZero() {
+		return None[T]()
+	}
+	return Some(value)
+}
 
 func (o *Option[T]) Scan(src any) error {
 	if src == nil {
@@ -86,53 +138,6 @@ func (o Option[T]) Value() (driver.Value, error) {
 		return value.MarshalText()
 	}
 	return o.value, nil
-}
-
-var _ stdlib = (*Option[int])(nil)
-
-// Some returns an Option that contains a value.
-func Some[T any](value T) Option[T] { return Option[T]{value: value, ok: true} }
-
-// None returns an Option that contains nothing.
-func None[T any]() Option[T] { return Option[T]{} }
-
-// Ptr returns an Option that is invalid if the pointer is nil, otherwise the dereferenced pointer.
-func Ptr[T any](ptr *T) Option[T] {
-	if ptr == nil {
-		return None[T]()
-	}
-	return Some(*ptr)
-}
-
-// Nil returns an Option that is invalid if the value is nil, otherwise the value.
-//
-// If the type is not nillable (slice, map, chan, ptr, interface) this will panic.
-//
-// Unfortunately there's no way to do this without reflection.
-func Nil[T any](ptr T) Option[T] {
-	rv := reflect.ValueOf(ptr)
-	if !rv.IsValid() {
-		return None[T]()
-	}
-	switch rv.Type().Kind() {
-	case reflect.Slice, reflect.Map, reflect.Chan, reflect.Ptr, reflect.Interface:
-		if rv.IsNil() {
-			return None[T]()
-		}
-		return Some(ptr)
-
-	default:
-		panic("type is not nillable")
-	}
-}
-
-// Zero returns an Option that is invalid if the value is the zero value, otherwise the value.
-func Zero[T any](value T) Option[T] {
-	rv := reflect.ValueOf(value)
-	if !rv.IsValid() || rv.IsZero() {
-		return None[T]()
-	}
-	return Some(value)
 }
 
 // Ptr returns a pointer to the value if the Option contains a value, otherwise nil.
