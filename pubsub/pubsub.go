@@ -24,7 +24,7 @@ type Message[T any] struct {
 func (a *Message[T]) Ack() { close(a.ack) }
 func (a *Message[T]) Nack(err error) {
 	if err == nil {
-		err = fmt.Errorf("nack")
+		err = errors.New("nack")
 	}
 	a.ack <- err
 	close(a.ack)

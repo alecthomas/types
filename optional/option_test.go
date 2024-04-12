@@ -52,6 +52,16 @@ func TestOptionUnmarshalJSON(t *testing.T) {
 	assert.Equal(t, 1, b)
 }
 
+func TestOptionMarshalJSONOmitEmpty(t *testing.T) {
+	s := struct {
+		Value Option[int] `json:"value,omitempty"`
+	}{}
+
+	b, err := json.Marshal(s)
+	assert.NoError(t, err)
+	assert.Equal(t, `{"value":null}`, string(b))
+}
+
 func TestOptionString(t *testing.T) {
 	o := Some(1)
 	assert.Equal(t, "1", o.String())
