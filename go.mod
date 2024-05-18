@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/alecthomas/assert/v2 v2.9.0
-	modernc.org/sqlite v1.29.8
+	modernc.org/sqlite v1.29.10
 )
 
 require (
