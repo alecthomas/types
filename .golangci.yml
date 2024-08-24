@@ -57,6 +57,7 @@ linters:
     - varcheck
     - deadcode
     - depguard
+    - mnd
 
 linters-settings:
   govet:
