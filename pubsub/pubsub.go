@@ -60,7 +60,7 @@ type Topic[T any] struct {
 // New creates a new topic that can be used to publish and subscribe to messages.
 func New[T any]() *Topic[T] {
 	s := &Topic[T]{
-		publish: make(chan Message[T], 64),
+		publish: make(chan Message[T], 16384),
 		control: make(chan control[T]),
 		close:   make(chan struct{}),
 	}
