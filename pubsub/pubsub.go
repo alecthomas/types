@@ -6,6 +6,7 @@ package pubsub
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -33,7 +34,10 @@ func (a *Message[T]) Nack(err error) {
 // Control messages for the topic.
 type control[T any] interface{ control() }
 
-type subscribe[T any] chan Message[T]
+type subscribe[T any] struct {
+	subscriber string
+	msg        chan Message[T]
+}
 
 func (subscribe[T]) control() {}
 
@@ -93,6 +97,11 @@ func (s *Topic[T]) PublishSync(t T) error {
 	}
 }
 
+func getSubscriber() string {
+	pc, file, line, _ := runtime.Caller(2)
+	return fmt.Sprintf("%s:%d: %s", file, line, runtime.FuncForPC(pc).Name())
+}
+
 // Subscribe a channel to the topic.
 //
 // The channel will be closed when the topic is closed.
@@ -111,7 +120,7 @@ func (s *Topic[T]) Subscribe(c chan T) chan T {
 		close(c)
 	}()
 	s.rawChannelMap.Store(c, forward)
-	s.control <- subscribe[T](forward)
+	s.control <- subscribe[T]{msg: forward, subscriber: getSubscriber()}
 	return c
 }
 
@@ -128,7 +137,7 @@ func (s *Topic[T]) SubscribeSync(c chan Message[T]) chan Message[T] {
 	if c == nil {
 		c = make(chan Message[T], 16)
 	}
-	s.control <- subscribe[T](c)
+	s.control <- subscribe[T]{msg: c, subscriber: getSubscriber()}
 	return c
 }
 
@@ -155,13 +164,13 @@ func (s *Topic[T]) Close() error {
 }
 
 func (s *Topic[T]) run() {
-	subscriptions := map[chan Message[T]]struct{}{}
+	subscriptions := map[chan Message[T]]subscribe[T]{}
 	for {
 		select {
 		case msg := <-s.control:
 			switch msg := msg.(type) {
 			case subscribe[T]:
-				subscriptions[msg] = struct{}{}
+				subscriptions[msg.msg] = msg
 
 			case unsubscribe[T]:
 				delete(subscriptions, msg)
@@ -173,7 +182,7 @@ func (s *Topic[T]) run() {
 				}
 				close(s.control)
 				close(s.publish)
-				s.rawChannelMap.Range(func(k, v interface{}) bool {
+				s.rawChannelMap.Range(func(k, v any) bool {
 					s.rawChannelMap.Delete(k)
 					return true
 				})
@@ -186,7 +195,7 @@ func (s *Topic[T]) run() {
 
 		case msg := <-s.publish:
 			errs := []error{}
-			for ch := range subscriptions {
+			for ch, sub := range subscriptions {
 				smsg := Message[T]{Msg: msg.Msg, ack: make(chan error, 1)}
 				ch <- smsg
 				timer := time.NewTimer(AckTimeout)
@@ -194,7 +203,7 @@ func (s *Topic[T]) run() {
 				case err := <-smsg.ack:
 					errs = append(errs, err)
 				case <-timer.C:
-					panic("ack timeout")
+					panic("ack timeout for " + sub.subscriber)
 				}
 				timer.Stop()
 			}
