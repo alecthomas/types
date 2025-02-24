@@ -16,6 +16,9 @@ import (
 // This is a last-ditch effort to avoid deadlocks.
 const AckTimeout = time.Second * 30
 
+// PublishTimeout is the time to wait for a publish before panicking.
+const PublishTimeout = time.Second * 10
+
 // Message is a message that must be acknowledge by the receiver.
 type Message[T any] struct {
 	Msg T
@@ -148,6 +151,11 @@ func (s *Topic[T]) Unsubscribe(c chan T) {
 		panic("channel not subscribed")
 	}
 	s.rawChannelMap.Delete(c)
+	// Drain the subscription channel
+	go func() {
+		for range c {
+		}
+	}()
 	s.control <- unsubscribe[T](ackch.(chan Message[T]))
 }
 
@@ -203,6 +211,7 @@ func (s *Topic[T]) run() {
 				case err := <-smsg.ack:
 					errs = append(errs, err)
 				case <-timer.C:
+					// Print all goroutines
 					panic("ack timeout for " + sub.subscriber)
 				}
 				timer.Stop()

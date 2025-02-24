@@ -1,6 +1,7 @@
 package pubsub_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -106,4 +107,30 @@ func TestSyncPubSub(t *testing.T) {
 		actual = append(actual, o)
 	}
 	assert.Equal(t, []string{"received", "published", "received", "published"}, actual)
+}
+
+func TestPubSubPanicAfterUnsubscribe(t *testing.T) {
+	t.Skip("This test is slow")
+	topic := New[string]()
+	for range 100 {
+		go func() {
+			foo := topic.Subscribe(make(chan string, 1))
+			<-time.After(time.Second)
+			topic.Unsubscribe(foo)
+		}()
+	}
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+	go func() {
+		for {
+			select {
+			case <-time.After(time.Millisecond * 100):
+				topic.Publish("foo")
+
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	<-time.After(time.Minute)
 }
