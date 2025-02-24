@@ -148,6 +148,10 @@ func (s *Topic[T]) Unsubscribe(c chan T) {
 		panic("channel not subscribed")
 	}
 	s.rawChannelMap.Delete(c)
+	go func() {
+		for range c {
+		}
+	}()
 	s.control <- unsubscribe[T](ackch.(chan Message[T]))
 }
 

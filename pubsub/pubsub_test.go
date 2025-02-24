@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/assert/v2"
+
 	. "github.com/alecthomas/types/pubsub" //nolint
 )
 
@@ -106,4 +107,25 @@ func TestSyncPubSub(t *testing.T) {
 		actual = append(actual, o)
 	}
 	assert.Equal(t, []string{"received", "published", "received", "published"}, actual)
+}
+
+func TestPubSubPanicAfterUnsubscribe(t *testing.T) {
+	t.Skip("This test is slow")
+	topic := New[string]()
+	for range 100 {
+		go func() {
+			foo := topic.Subscribe(make(chan string, 1))
+			<-time.After(time.Second)
+			topic.Unsubscribe(foo)
+		}()
+	}
+	go func() {
+		for {
+			select {
+			case <-time.After(time.Millisecond * 100):
+				topic.Publish("foo")
+			}
+		}
+	}()
+	<-time.After(time.Minute)
 }
