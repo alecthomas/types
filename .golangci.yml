@@ -1,7 +1,5 @@
 run:
   tests: true
-  skip-dirs:
-    - _examples
 
 output:
   print-issued-lines: false
@@ -9,7 +7,6 @@ output:
 linters:
   enable-all: true
   disable:
-    - maligned
     - lll
     - gocyclo
     - gochecknoglobals
@@ -19,12 +16,10 @@ linters:
     - funlen
     - gocognit
     - gomnd
-    - goerr113
     - godot
     - nestif
     - testpackage
     - nolintlint
-    - exhaustivestruct
     - wrapcheck
     - gci
     - gofumpt
@@ -35,11 +30,7 @@ linters:
     - forbidigo
     - revive
     - cyclop
-    - ifshort
     - paralleltest
-    - interfacer
-    - scopelint
-    - golint
     - wastedassign
     - forcetypeassert
     - gomoddirectives
@@ -52,16 +43,13 @@ linters:
     - maintidx
     - unused # Does not work with type parameters
     - dupword
-    - structcheck
-    - nosnakecase
-    - varcheck
-    - deadcode
     - depguard
     - mnd
+    - execinquery
+    - exportloopref
+    - err113
 
 linters-settings:
-  govet:
-    check-shadowing: true
   gocyclo:
     min-complexity: 10
   dupl:
@@ -74,6 +62,8 @@ linters-settings:
 
 issues:
   max-per-linter: 0
+  exclude-dirs:
+    - _examples
   max-same: 0
   exclude-use-default: false
   exclude:
