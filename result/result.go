@@ -23,6 +23,15 @@ func Ok[T any](value T) Result[T] { return Result[T]{value: value} }
 // Err returns a Result that contains an error.
 func Err[T any](err error) Result[T] { return Result[T]{err: err} }
 
+// Map a Result[L] to Result[R]. If Result[L] is an error mapper will not be called and the result will be an error.
+func Map[L, R any](l Result[L], mapper func(L) (R, error)) Result[R] {
+	value, err := l.Result()
+	if err != nil {
+		return Err[R](err)
+	}
+	return Outcome(mapper(value))
+}
+
 // From returns a Result that contains a value or an error.
 //
 // It can be used to convert a function that returns a value and an error into a
@@ -48,14 +57,14 @@ func Outcome[T any](value T, err error) Result[T] {
 }
 
 // Errf returns a Result that contains a formatted error.
-func Errf[T any](format string, args ...interface{}) Result[T] {
+func Errf[T any](format string, args ...any) Result[T] {
 	return Err[T](fmt.Errorf(format, args...))
 }
 
 // Errorf returns a Result that contains a formatted error.
 //
 // Deprecated: Use Errf instead.
-func Errorf[T any](format string, args ...interface{}) Result[T] {
+func Errorf[T any](format string, args ...any) Result[T] {
 	return Err[T](fmt.Errorf(format, args...))
 }
 
