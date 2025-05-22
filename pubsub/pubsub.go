@@ -111,6 +111,18 @@ func getSubscriber() string {
 //
 // If "c" is nil a new channel of size 16 will be created.
 func (s *Topic[T]) Subscribe(c chan T) chan T {
+	return s.SubscribeWithName(c, getSubscriber())
+}
+
+// SubscribeWithName subscribes a channel to the topic with a named subscription.
+//
+// This name can be used for debugging purposes to identify the subscriber.
+// The name is not used for anything else.
+//
+// The channel will be closed when the topic is closed.
+//
+// If "c" is nil a new channel of size 16 will be created.
+func (s *Topic[T]) SubscribeWithName(c chan T, name string) chan T {
 	if c == nil {
 		c = make(chan T, 16)
 	}
@@ -123,11 +135,14 @@ func (s *Topic[T]) Subscribe(c chan T) chan T {
 		close(c)
 	}()
 	s.rawChannelMap.Store(c, forward)
-	s.control <- subscribe[T]{msg: forward, subscriber: getSubscriber()}
+	s.control <- subscribe[T]{msg: forward, subscriber: name}
 	return c
 }
 
 // SubscribeSync creates a synchronous subscription to the topic.
+//
+// This name can be used for debugging purposes to identify the subscriber.
+// The name is not used for anything else.
 //
 // Each message must be acked by the subscriber.
 //
@@ -137,10 +152,23 @@ func (s *Topic[T]) Subscribe(c chan T) chan T {
 // The channel will be closed when the topic is closed.
 // If "c" is nil a new channel of size 16 will be created.
 func (s *Topic[T]) SubscribeSync(c chan Message[T]) chan Message[T] {
+	return s.SubscribeSyncWithName(c, getSubscriber())
+}
+
+// SubscribeSyncWithName creates a synchronous subscription to the topic.
+//
+// Each message must be acked by the subscriber.
+//
+// A synchronous publish will block until the message has been acked by
+// all subscribers.
+//
+// The channel will be closed when the topic is closed.
+// If "c" is nil a new channel of size 16 will be created.
+func (s *Topic[T]) SubscribeSyncWithName(c chan Message[T], name string) chan Message[T] {
 	if c == nil {
 		c = make(chan Message[T], 16)
 	}
-	s.control <- subscribe[T]{msg: c, subscriber: getSubscriber()}
+	s.control <- subscribe[T]{msg: c, subscriber: name}
 	return c
 }
 
