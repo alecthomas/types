@@ -93,6 +93,20 @@ func (o *Option[T]) Scan(src any) error {
 	}
 	var value T
 	switch scan := any(&value).(type) {
+	case *string: // Special-case "string" because some drivers use []byte for string, which is annoying
+		switch src := src.(type) {
+		case string:
+			o.value = any(src).(T)
+			o.ok = true
+
+		case []byte:
+			o.value = any(string(src)).(T)
+			o.ok = true
+
+		default:
+			return fmt.Errorf("cannot scan %T into Option[%T]", src, o.value)
+		}
+
 	case sql.Scanner:
 		if err := scan.Scan(src); err != nil {
 			return fmt.Errorf("cannot scan %T into Option[%T]: %w", src, o.value, err)

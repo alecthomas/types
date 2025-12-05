@@ -81,35 +81,31 @@ func TestOptionGoString(t *testing.T) {
 func TestOptionSQL(t *testing.T) {
 	db, err := sql.Open("sqlite", ":memory:")
 	assert.NoError(t, err)
-	_, err = db.Exec(`CREATE TABLE test (id INTEGER PRIMARY KEY, value INTEGER);`)
+	_, err = db.Exec(`CREATE TABLE test (id INTEGER PRIMARY KEY, value INTEGER, name BLOB);`)
 	assert.NoError(t, err)
-	_, err = db.Exec(`INSERT INTO test (id, value) VALUES (1, 1);`)
+	_, err = db.Exec(`INSERT INTO test (id, value, name) VALUES (1, 1, 'Bob');`)
 	assert.NoError(t, err)
-	_, err = db.Exec(`INSERT INTO test (id, value) VALUES (2, NULL);`)
+	_, err = db.Exec(`INSERT INTO test (id, value, name) VALUES (2, NULL, 'Alice');`)
 	assert.NoError(t, err)
 
 	var option Option[int64]
-	rows, err := db.Query("SELECT value FROM test WHERE id = 1;")
-	assert.NoError(t, err)
-	defer rows.Close()
-	for rows.Next() {
-		err = rows.Scan(&option)
-		assert.NoError(t, err)
-	}
-	err = rows.Err()
+	row := db.QueryRow("SELECT value FROM test WHERE id = 1;")
+	err = row.Scan(&option)
 	assert.NoError(t, err)
 	assert.Equal(t, Some(int64(1)), option)
 
-	rows, err = db.Query("SELECT value FROM test WHERE id = 2;")
+	row = db.QueryRow("SELECT value FROM test WHERE id = 2;")
 	assert.NoError(t, err)
-	defer rows.Close()
-	for rows.Next() {
-		err = rows.Scan(&option)
-		assert.NoError(t, err)
-	}
-	err = rows.Err()
+	err = row.Scan(&option)
 	assert.NoError(t, err)
 	assert.Equal(t, None[int64](), option)
+
+	var name Option[string]
+	row = db.QueryRow("SELECT name FROM test WHERE id = 2;")
+	assert.NoError(t, err)
+	err = row.Scan(&name)
+	assert.NoError(t, err)
+	assert.Equal(t, Some("Alice"), name)
 }
 
 func TestOptionZero(t *testing.T) {
@@ -124,4 +120,11 @@ func TestOptionNil(t *testing.T) {
 	})
 
 	assert.Equal(t, None[error](), Nil((error)(nil)))
+}
+
+func TestScanStringFromBytes(t *testing.T) {
+	var actual Option[string]
+	err := actual.Scan([]byte("Hello, world!"))
+	assert.NoError(t, err)
+	assert.Equal(t, Some("Hello, world!"), actual)
 }
