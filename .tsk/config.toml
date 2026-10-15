@@ -1,0 +1,210 @@
+imports = [
+  "github.com/alecthomas/tsk@v0.15.2//linters",
+]
+
+disable-all = true
+enable = [
+  'errcheck',
+  'asasalint',
+  'asciicheck',
+  'bidichk',
+  'bodyclose',
+  'canonicalheader',
+  'copyloopvar',
+  'dupl',
+  'durationcheck',
+  'errname',
+  'errorlint',
+  'exhaustive',
+  'exptostd',
+  'fatcontext',
+  'forbidigo',
+  'funcorder',
+  'funlen',
+  'gocheckcompilerdirectives',
+  'gochecknoglobals',
+  'goconst',
+  'godoclint',
+  'godot',
+  'gomoddirectives',
+  'goprintffuncname',
+  'iface',
+  'inamedparam',
+  'ineffassign',
+  'intrange',
+  'iotamixing',
+  'loggercheck',
+  'makezero',
+  'mirror',
+  'nakedret',
+  'nilerr',
+  'nilnesserr',
+  'noctx',
+  'nosprintfhostport',
+  'perfsprint',
+  'predeclared',
+  'promlinter',
+  'protogetter',
+  'reassign',
+  'recvcheck',
+  'revive',
+  'rowserrcheck',
+  'spancheck',
+  'sqlclosecheck',
+  'sumtype',
+  'testableexamples',
+  'tparallel',
+  'unconvert',
+  'unparam',
+  'unused',
+  'usestdlibvars',
+  'usetesting',
+  'wastedassign',
+  'whitespace',
+  'govet',
+  'atomicalign',
+  'deepequalerrors',
+  'nilness',
+  'reflectvaluecompare',
+  'shadow',
+  'sortslice',
+  'unusedwrite',
+]
+disable = [
+  'indent_error_flow',
+  'unused_parameter',
+]
+skip-tests = [
+  'bodyclose',
+  'dupl',
+  'errcheck',
+  'funlen',
+  'goconst',
+  'godot',
+  'noctx',
+  'wrapcheck',
+]
+
+# golangci-lint's std-error-handling preset: these errors rarely need handling.
+[[exclude]]
+linters = ['errcheck']
+text = 'Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print(f|ln)?|os\.(Un)?Setenv). is not checked'
+
+[[exclude]]
+linters = ['gomoddirectives']
+path = '^go\.mod$'
+text = 'local replacement are not allowed: github\.com/microsoft/TypeScript/tsc/shim/typescript'
+
+[[exclude]]
+linters = ['godot']
+source = 'TODO'
+
+[[exclude]]
+linters = ['revive']
+text = 'should have a package comment'
+
+[[exclude]]
+linters = ['revive']
+text = 'exported \S+ \S+ should have comment( \(or a comment on this block\))? or be unexported'
+
+[[exclude]]
+linters = ['revive']
+source = '// ?(nolint|TODO)'
+text = 'package comment should be of the form ".+"'
+
+[[exclude]]
+linters = ['revive']
+source = '// ?(nolint|TODO)'
+text = 'comment on exported \S+ \S+ should be of the form ".+"'
+
+[[exclude]]
+linters = ['shadow']
+text = 'declaration of "(err|logger)" shadows declaration'
+
+[[exclude]]
+linters = ['revive']
+path = '(internal/httputil/|internal/metrics/)'
+text = 'avoid package names that conflict with Go standard library'
+
+[[exclude]]
+linters = ['forbidigo']
+path = '_test\.go'
+text = 'MustGet'
+
+[[exclude]]
+linters = ['forbidigo']
+path = '_test\.go$'
+text = 'Use math/rand/v2 instead'
+
+[[exclude]]
+linters = ['forbidigo']
+path = '(^|/)main\.go$'
+text = 'Use log/slog instead'
+
+[cyclop]
+max-complexity = 30
+package-average = 10.0
+
+[embeddedstructfieldcheck]
+forbid-mutex = true
+
+[errcheck]
+check-blank = true
+
+[exhaustive]
+check = ['switch', 'map']
+
+[exhaustruct]
+allow-empty-returns = true
+
+[forbidigo]
+analyze-types = true
+exclude-godoc-examples = true
+
+[funcorder]
+struct-method = false
+
+[funlen]
+lines = 250
+statements = 50
+
+[gocognit]
+min-complexity = 20
+
+[godoclint]
+enable = ['no-unused-link']
+
+[inamedparam]
+skip-single-param = false
+
+[nakedret]
+max-func-lines = 0
+
+[nolintlint]
+allow-no-explanation = ['funlen', 'gocognit', 'golines']
+require-explanation = true
+require-specific = true
+
+[perfsprint]
+strconcat = false
+
+[reassign]
+patterns = ['.*']
+
+[shadow]
+strict = true
+
+[dot_imports]
+allowed-packages = ['github.com/alecthomas/types/optional']
+
+[rowserrcheck]
+packages = ['github.com/jmoiron/sqlx']
+
+[usetesting]
+os-temp-dir = true
+
+[wrapcheck]
+ignore-package-globs = ['github.com/alecthomas/errors']
+
+[encapsulation]
+allow-generated-construction = true

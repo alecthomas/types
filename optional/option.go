@@ -58,8 +58,8 @@ func Nil[T any](ptr T) Option[T] {
 	if !rv.IsValid() {
 		return None[T]()
 	}
-	switch rv.Type().Kind() {
-	case reflect.Slice, reflect.Map, reflect.Chan, reflect.Ptr, reflect.Interface:
+	switch rv.Type().Kind() { //nolint:exhaustive
+	case reflect.Slice, reflect.Map, reflect.Chan, reflect.Pointer, reflect.Interface:
 		if rv.IsNil() {
 			return None[T]()
 		}
