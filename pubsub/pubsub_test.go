@@ -85,7 +85,7 @@ func TestSyncPubSub(t *testing.T) {
 
 		// Test nack
 		select {
-		case msg := <-ch:
+		case msg := <-ch: //nolint:shadow
 			assert.Equal(t, "world", msg.Msg)
 			order <- "received"
 			msg.Nack(errors.New("nack"))

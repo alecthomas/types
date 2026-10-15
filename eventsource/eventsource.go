@@ -46,13 +46,13 @@ func (e *EventSource[T]) Load() T {
 
 func (e *EventSource[T]) Swap(value T) T {
 	rv := e.value.Swap(value)
-	_ = e.PublishSync(value)
+	_ = e.PublishSync(value) //nolint:errcheck
 	return rv.(T)
 }
 
-func (e *EventSource[T]) CompareAndSwap(old, new T) bool { //nolint:predeclared
+func (e *EventSource[T]) CompareAndSwap(old, new T) bool { //nolint:redefines_builtin_id,predeclared
 	if e.value.CompareAndSwap(old, new) {
-		_ = e.PublishSync(new)
+		_ = e.PublishSync(new) //nolint:errcheck
 		return true
 	}
 	return false
